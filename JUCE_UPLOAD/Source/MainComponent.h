@@ -49,6 +49,9 @@ private:
     VerticalFaderComponent verticalFader;
     SettingsPanelXLComponent settingsPanel;
 
+    // ValueTree to store persistent state
+    juce::ValueTree state { "AppState" };
+
     // Custom LookAndFeel for plus/minus buttons
     class ButtonLookAndFeel : public juce::LookAndFeel_V4
     {
@@ -88,6 +91,12 @@ private:
     const juce::String whiteKeyNotes[7] = {"C", "D", "E", "F", "G", "A", "B"};
     // Using nullptrs for spacing in black key array based on PianoXL.tsx structure
     const juce::String blackKeyNotes[6] = {"C#", "D#", "", "F#", "G#", "A#"}; // "" for placeholder
+
+    // Persistence helpers
+    void loadState();
+    void saveState();
+
+    juce::File getStateFile() const;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainComponent)
 }; 
