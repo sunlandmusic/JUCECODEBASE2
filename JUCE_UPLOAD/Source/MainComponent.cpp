@@ -57,12 +57,20 @@ MainComponent::MainComponent()
     buttonStyle(minusButton);
 
     plusButton.onClick = [this] {
-        // Handle plus button click
-        std::cout << "Plus button clicked" << std::endl;
+        int value = (int) state.getProperty("inversion", 0);
+        value += 1;
+        if (value > 5) value = 5;
+        state.setProperty("inversion", value, nullptr);
+        settingsPanel.setInversionValue(value);
+        std::cout << "Plus button clicked, inversion=" << value << std::endl;
     };
     minusButton.onClick = [this] {
-        // Handle minus button click
-        std::cout << "Minus button clicked" << std::endl;
+        int value = (int) state.getProperty("inversion", 0);
+        value -= 1;
+        if (value < -5) value = -5;
+        state.setProperty("inversion", value, nullptr);
+        settingsPanel.setInversionValue(value);
+        std::cout << "Minus button clicked, inversion=" << value << std::endl;
     };
 
     addAndMakeVisible(plusButton);
@@ -95,6 +103,14 @@ MainComponent::MainComponent()
         std::cout << "XL Button clicked. New mode: " << titleComponent.getXlButton().getButtonText() << std::endl;
     };
 
+    loadState();
+
+    // Restore inversion value and selection state
+    int invVal = state.getProperty("inversion", 0);
+    bool invSel = state.getProperty("inversionSelected", false);
+    settingsPanel.setInversionValue(invVal);
+    inversionSelectionChanged(invSel, invVal);
+
     // Force an initial layout
     resized();
 }
@@ -104,8 +120,11 @@ void MainComponent::inversionSelectionChanged(bool isSelected, int value)
     // Enable/disable plus/minus buttons based on selection state
     plusButton.setEnabled(isSelected);
     minusButton.setEnabled(isSelected);
-    
-    std::cout << "Inversion selection changed - Selected: " << (isSelected ? "yes" : "no") 
+
+    state.setProperty("inversionSelected", isSelected, nullptr);
+    state.setProperty("inversion", value, nullptr);
+
+    std::cout << "Inversion selection changed - Selected: " << (isSelected ? "yes" : "no")
               << ", Value: " << value << std::endl;
 }
 
@@ -114,6 +133,8 @@ MainComponent::~MainComponent()
     settingsPanel.removeListener(this);
     plusButton.setLookAndFeel(nullptr);
     minusButton.setLookAndFeel(nullptr);
+
+    saveState();
 }
 
 void MainComponent::paint(juce::Graphics& g)
@@ -329,4 +350,36 @@ void MainComponent::resized()
                          static_cast<int>(buttonsStartY + buttonHeight + buttonSpacing),
                          static_cast<int>(buttonWidth),
                          static_cast<int>(buttonHeight));
-} 
+}
+
+juce::File MainComponent::getStateFile() const
+{
+    auto dir = juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory);
+    return dir.getChildFile("pianoXL_state.xml");
+}
+
+void MainComponent::loadState()
+{
+    auto file = getStateFile();
+    if (file.existsAsFile())
+    {
+        juce::XmlDocument doc(file);
+        if (auto xml = doc.getDocumentElement())
+        {
+            state = juce::ValueTree::fromXml(*xml);
+        }
+    }
+
+    if (!state.hasProperty("inversion"))
+        state.setProperty("inversion", 0, nullptr);
+    if (!state.hasProperty("inversionSelected"))
+        state.setProperty("inversionSelected", false, nullptr);
+}
+
+void MainComponent::saveState()
+{
+    if (auto xml = state.createXml())
+    {
+        xml->writeTo(getStateFile());
+    }
+}

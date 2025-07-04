@@ -209,6 +209,11 @@ void SettingsPanelXLComponent::toggleSelection(const juce::String& control)
     std::cout << "Selected control: " << (selectedControl.isEmpty() ? "none" : selectedControl) << std::endl;
 }
 
+void SettingsPanelXLComponent::setSelectedControl(const juce::String& control)
+{
+    toggleSelection(control);
+}
+
 void SettingsPanelXLComponent::setInversionValue(int newValue)
 {
     if (currentInversionValue != newValue)
